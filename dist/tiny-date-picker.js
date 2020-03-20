@@ -1,7 +1,7 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global.TinyDatePicker = factory());
+  (global = global || self, global.TinyDatePicker = factory());
 }(this, (function () { 'use strict';
 
   /**
@@ -224,8 +224,14 @@
     opts.min = parse(opts.min || shiftYear(now(), -100));
     opts.max = parse(opts.max || shiftYear(now(), 100));
     opts.hilightedDate = opts.parse(opts.hilightedDate);
+    opts.monthClassNames = Array.isArray(opts.monthClassNamesList)
+      ? opts.monthClassNamesList.join(' ')
+      : '';
+    opts.yearClassNames = Array.isArray(opts.yearClassNamesList)
+      ? opts.yearClassNamesList.join(' ')
+      : '';
 
-    return opts;
+    return opts
   }
 
   function defaults() {
@@ -239,29 +245,31 @@
       // initial value.
       hilightedDate: now(),
 
-      format: function (dt) {
-        return (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear();
+      format: function(dt) {
+        return dt.getMonth() + 1 + '/' + dt.getDate() + '/' + dt.getFullYear()
       },
 
-      parse: function (str) {
+      parse: function(str) {
         var date = new Date(str);
-        return isNaN(date) ? now() : date;
+        return isNaN(date) ? now() : date
       },
 
-      dateClass: function () { },
+      dateClass: function() {},
 
-      inRange: function () {
-        return true;
-      }
-    };
+      inRange: function() {
+        return true
+      },
+
+      appendTo: document.body,
+    }
   }
 
   function makeInRangeFn(opts) {
     var inRange = opts.inRange; // Cache this version, and return a variant
 
-    return function (dt, dp) {
-      return inRange(dt, dp) && opts.min <= dt && opts.max >= dt;
-    };
+    return function(dt, dp) {
+      return inRange(dt, dp) && opts.min <= dt && opts.max >= dt
+    }
   }
 
   /**
@@ -329,7 +337,7 @@
       'dp-cal-month': showMonthPicker,
       'dp-cal-year': showYearPicker,
     },
-    render: render
+    render: render,
   };
 
   /**
@@ -348,51 +356,75 @@
     var hilightedDate = state.hilightedDate;
     var hilightedMonth = hilightedDate.getMonth();
     var today = now().getTime();
+    var monthClassNames = opts.monthClassNames;
+    var yearClassNames = opts.yearClassNames;
 
     return (
       '<div class="dp-cal">' +
-        '<header class="dp-cal-header">' +
-          '<button tabindex="-1" type="button" class="dp-prev">Prev</button>' +
-          '<button tabindex="-1" type="button" class="dp-cal-month">' +
-            lang.months[hilightedMonth] +
-          '</button>' +
-          '<button tabindex="-1" type="button" class="dp-cal-year">' +
-            hilightedDate.getFullYear() +
-          '</button>' +
-          '<button tabindex="-1" type="button" class="dp-next">Next</button>' +
-        '</header>' +
-        '<div class="dp-days">' +
-          dayNames.map(function (name, i) {
-            return (
-              '<span class="dp-col-header">' + dayNames[(i + dayOffset) % dayNames.length] + '</span>'
-            );
-          }).join('') +
-          mapDays(hilightedDate, dayOffset, function (date) {
-            var isNotInMonth = date.getMonth() !== hilightedMonth;
-            var isDisabled = !opts.inRange(date);
-            var isToday = date.getTime() === today;
-            var className = 'dp-day';
-            className += (isNotInMonth ? ' dp-edge-day' : '');
-            className += (datesEq(date, hilightedDate) ? ' dp-current' : '');
-            className += (datesEq(date, selectedDate) ? ' dp-selected' : '');
-            className += (isDisabled ? ' dp-day-disabled' : '');
-            className += (isToday ? ' dp-day-today' : '');
-            className += ' ' + opts.dateClass(date, dp);
+      '<header class="dp-cal-header">' +
+      '<button tabindex="-1" type="button" class="dp-prev">Prev</button>' +
+      '<div class="dp-cal-month-wrapper"> <span>Month</span>' +
+      '<button tabindex="-1" type="button" class="dp-cal-month ' +
+      monthClassNames +
+      '">' +
+      lang.months[hilightedMonth] +
+      '</button>' +
+      '</div>' +
+      '<div class="dp-cal-month-wrapper"> <span>Year</span>' +
+      '<button tabindex="-1" type="button" class="dp-cal-year ' +
+      yearClassNames +
+      '">' +
+      hilightedDate.getFullYear() +
+      '</button>' +
+      '</div>' +
+      '<button tabindex="-1" type="button" class="dp-next">Next</button>' +
+      '</header>' +
+      '<div class="dp-days">' +
+      dayNames
+        .map(function(name, i) {
+          return (
+            '<span class="dp-col-header">' +
+            dayNames[(i + dayOffset) % dayNames.length] +
+            '</span>'
+          )
+        })
+        .join('') +
+      mapDays(hilightedDate, dayOffset, function(date) {
+        var isNotInMonth = date.getMonth() !== hilightedMonth;
+        var isDisabled = !opts.inRange(date);
+        var isToday = date.getTime() === today;
+        var className = 'dp-day';
+        className += isNotInMonth ? ' dp-edge-day' : '';
+        className += datesEq(date, hilightedDate) ? ' dp-current' : '';
+        className += datesEq(date, selectedDate) ? ' dp-selected' : '';
+        className += isDisabled ? ' dp-day-disabled' : '';
+        className += isToday ? ' dp-day-today' : '';
+        className += ' ' + opts.dateClass(date, dp);
 
-            return (
-              '<button tabindex="-1" type="button" class="' + className + '" data-date="' + date.getTime() + '">' +
-                date.getDate() +
-              '</button>'
-            );
-          }) +
-        '</div>' +
-        '<footer class="dp-cal-footer">' +
-          '<button tabindex="-1" type="button" class="dp-today">' + lang.today + '</button>' +
-          '<button tabindex="-1" type="button" class="dp-clear">' + lang.clear + '</button>' +
-          '<button tabindex="-1" type="button" class="dp-close">' + lang.close + '</button>' +
-        '</footer>' +
+        return (
+          '<button tabindex="-1" type="button" class="' +
+          className +
+          '" data-date="' +
+          date.getTime() +
+          '">' +
+          date.getDate() +
+          '</button>'
+        )
+      }) +
+      '</div>' +
+      '<footer class="dp-cal-footer">' +
+      '<button tabindex="-1" type="button" class="dp-today">' +
+      lang.today +
+      '</button>' +
+      '<button tabindex="-1" type="button" class="dp-clear">' +
+      lang.clear +
+      '</button>' +
+      '<button tabindex="-1" type="button" class="dp-close">' +
+      lang.close +
+      '</button>' +
+      '</footer>' +
       '</div>'
-    );
+    )
   }
 
   /**
@@ -404,18 +436,22 @@
   function keyDown(e, dp) {
     var key = e.keyCode;
     var shiftBy =
-      (key === Key.left) ? -1 :
-      (key === Key.right) ? 1 :
-      (key === Key.up) ? -7 :
-      (key === Key.down) ? 7 :
-      0;
+      key === Key.left
+        ? -1
+        : key === Key.right
+        ? 1
+        : key === Key.up
+        ? -7
+        : key === Key.down
+        ? 7
+        : 0;
 
     if (key === Key.esc) {
       dp.close();
     } else if (shiftBy) {
       e.preventDefault();
       dp.setState({
-        hilightedDate: shiftDay(dp.state.hilightedDate, shiftBy)
+        hilightedDate: shiftDay(dp.state.hilightedDate, shiftBy),
       });
     }
   }
@@ -438,27 +474,27 @@
 
   function showMonthPicker(e, dp) {
     dp.setState({
-      view: 'month'
+      view: 'month',
     });
   }
 
   function showYearPicker(e, dp) {
     dp.setState({
-      view: 'year'
+      view: 'year',
     });
   }
 
   function gotoNextMonth(e, dp) {
     var hilightedDate = dp.state.hilightedDate;
     dp.setState({
-      hilightedDate: shiftMonth(hilightedDate, 1)
+      hilightedDate: shiftMonth(hilightedDate, 1),
     });
   }
 
   function gotoPrevMonth(e, dp) {
     var hilightedDate = dp.state.hilightedDate;
     dp.setState({
-      hilightedDate: shiftMonth(hilightedDate, -1)
+      hilightedDate: shiftMonth(hilightedDate, -1),
     });
   }
 
@@ -483,12 +519,12 @@
 
     // We are going to have 6 weeks always displayed to keep a consistent
     // calendar size
-    for (var day = 0; day < (6 * 7); ++day) {
+    for (var day = 0; day < 6 * 7; ++day) {
       result += fn(iter);
       iter.setDate(iter.getDate() + 1);
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -671,7 +707,7 @@
       containerHTML: '<div class="dp"></div>',
 
       attachToDom: function () {
-        document.body.appendChild(dp.el);
+        opts.appendTo.appendChild(dp.el);
       },
 
       updateInput: function (selectedDate) {
@@ -758,7 +794,7 @@
       },
 
       render: function () {
-        if (!dp.el || !dp.el.firstChild) {
+        if (!dp.el) {
           return;
         }
 
@@ -1023,7 +1059,6 @@
     var dp = BaseMode(root, emit, opts);
 
     dp.close = noop;
-    dp.destroy = noop;
     dp.updateInput = noop;
     dp.shouldFocusOnRender = opts.shouldFocusOnRender;
 
