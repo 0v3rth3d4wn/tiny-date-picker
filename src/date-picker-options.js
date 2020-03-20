@@ -2,8 +2,8 @@
  * @file Responsible for sanitizing and creating date picker options.
  */
 
-import {now, shiftYear, dateOrParse} from './lib/date-manip';
-import {cp} from './lib/fns';
+import { now, shiftYear, dateOrParse } from './lib/date-manip'
+import { cp } from './lib/fns'
 
 var english = {
   days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -24,7 +24,7 @@ var english = {
   today: 'Today',
   clear: 'Clear',
   close: 'Close',
-};
+}
 
 /**
  * DatePickerOptions constructs a new date picker options object, overriding
@@ -34,17 +34,23 @@ var english = {
  * @returns {DatePickerOptions}
  */
 export default function DatePickerOptions(opts) {
-  opts = opts || {};
-  opts = cp(defaults(), opts);
-  var parse = dateOrParse(opts.parse);
-  opts.lang = cp(english, opts.lang);
-  opts.parse = parse;
-  opts.inRange = makeInRangeFn(opts);
-  opts.min = parse(opts.min || shiftYear(now(), -100));
-  opts.max = parse(opts.max || shiftYear(now(), 100));
-  opts.hilightedDate = opts.parse(opts.hilightedDate);
+  opts = opts || {}
+  opts = cp(defaults(), opts)
+  var parse = dateOrParse(opts.parse)
+  opts.lang = cp(english, opts.lang)
+  opts.parse = parse
+  opts.inRange = makeInRangeFn(opts)
+  opts.min = parse(opts.min || shiftYear(now(), -100))
+  opts.max = parse(opts.max || shiftYear(now(), 100))
+  opts.hilightedDate = opts.parse(opts.hilightedDate)
+  opts.monthClassNames = Array.isArray(opts.monthClassNamesList)
+    ? opts.monthClassNamesList.join(' ')
+    : ''
+  opts.yearClassNames = Array.isArray(opts.yearClassNamesList)
+    ? opts.yearClassNamesList.join(' ')
+    : ''
 
-  return opts;
+  return opts
 }
 
 function defaults() {
@@ -58,29 +64,29 @@ function defaults() {
     // initial value.
     hilightedDate: now(),
 
-    format: function (dt) {
-      return (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear();
+    format: function(dt) {
+      return dt.getMonth() + 1 + '/' + dt.getDate() + '/' + dt.getFullYear()
     },
 
-    parse: function (str) {
-      var date = new Date(str);
-      return isNaN(date) ? now() : date;
+    parse: function(str) {
+      var date = new Date(str)
+      return isNaN(date) ? now() : date
     },
 
-    dateClass: function () { },
+    dateClass: function() {},
 
-    inRange: function () {
-      return true;
+    inRange: function() {
+      return true
     },
 
     appendTo: document.body,
-  };
+  }
 }
 
 function makeInRangeFn(opts) {
-  var inRange = opts.inRange; // Cache this version, and return a variant
+  var inRange = opts.inRange // Cache this version, and return a variant
 
-  return function (dt, dp) {
-    return inRange(dt, dp) && opts.min <= dt && opts.max >= dt;
-  };
+  return function(dt, dp) {
+    return inRange(dt, dp) && opts.min <= dt && opts.max >= dt
+  }
 }
